@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>reveal.js</title>
+
+		<link rel="stylesheet" href="dist/reset.css">
+		<link rel="stylesheet" href="dist/reveal.css">
+		<link rel="stylesheet" href="dist/theme/night.css">
+
+		<!-- Theme used for syntax highlighted code -->
+		<link rel="stylesheet" href="plugin/highlight/monokai.css">
+
+<style>
+/* custom styles */
+.reveal .slides p {
+	text-align: left;
+}
+.reveal .slides h2 code {
+	color: tomato;
+}
+</style>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section style="font-size: 80%;">
+					<h1>Koha SQL Reports</h1>
+					<h2>GiftED Community Session</h2>
+					<h3>Eric Phetteplace &lt;<a href="mailto:ephetteplace@cca.edu">ephetteplace@cca.edu</a>&gt;, Systems Librarian, California College of the Arts</h3>
+				</section>
+
+				<!-- topics:
+					x schema, search engine
+					x neverending query
+					x deleted* tables
+					statistics versus issues table
+					x public JSON links
+					reports keep getting better! batch processing, autocomplete
+					get help from #reports channel in bywater slack
+				 -->
+
+				<section>
+					<h2>Session Specifics</h2>
+					<p>General tips and tricks specific to <em>Koha</em> SQL reports and not SQL queries in general.</p>
+					<p>There will definitely be some SQL on slides but hopefully nothing too arcane.</p>
+					<p>I'm no SQL expert! Please chime in with your own ideas in chat.</p>
+				</section>
+
+				<section>
+					<h2>What's in a table?</h2>
+
+					<ul>
+						<li><a href="https://wiki.koha-community.org/wiki/SQL_Reports_Library">Reports Library</a></li>
+						<li>Schema <a href="https://schema.koha-community.org/">schema.koha-community.org/</a></li>
+						<li>"Search engine" links to any given table</li>
+					</ul>
+
+					<aside class="notes">
+						Let's start with how to find the data you're looking for in Koha's many database tables. The most obvious places to look at the ones shown right in the reports
+					</aside>
+				</section>
+
+				<section>
+					<h2>Experimental Queries</h2>
+					<p>Peek at what's in a particular table:</p>
+					<pre><code>SELECT * FROM deletedbiblio</code></pre>
+					<p>Enumerate the values in a field:</p>
+					<pre class="fragment"><code>SELECT DISTINCT itype FROM items ORDER BY itype</code></pre>
+				</section>
+
+				<section>
+					<h2><code>deleted*</code> tables</h2>
+					<p>Deleted biblios (and their metadata), items, and borrowers (patrons) are not removed from the database permanently but transferred to a new table with a "deleted" prefix.</p>
+					<p>Similarly, past issues (checkouts) and holds (reserves) are moved to tables prefixed with "old".</p>
+					<p>Many reports, to be entirely accurate, must factor in these "deleted" or "old" tables.</p>
+				</section>
+
+				<section>
+					<h2>Use a <code>UNION</code> in a subquery</h2>
+					<p><em>All</em> biblios:</p>
+<pre><code>SELECT * FROM (
+	SELECT * FROM biblio
+	UNION
+	SELECT * FROM deletedbiblio) b
+ORDER BY b.biblionumber</code></pre>
+				</section>
+
+				<section>
+					<h2>Annotate combined tables</h2>
+					<p>This combined items table will have "status" column.</p>
+<pre><code>SELECT i.status, i.itemnumber, i.itype FROM
+	(SELECT "live" as status, i.* FROM items i
+	UNION
+	SELECT "deleted" as status, di.* FROM deleteditems di) i
+ORDER BY i.itemnumber</code></pre>
+<table>
+	<tr>
+		<th>status</th>
+		<th>itemnumber</th>
+		<th>itype</th>
+	</tr>
+	<tr>
+		<td>live</td>
+		<td>1</td>
+		<td>BOOK</td>
+	</tr>
+	<tr>
+		<td>deleted</td>
+		<td>2</td>
+		<td>BOOK</td>
+	</tr>
+</table>
+				</section>
+
+				<section>
+					<h2>Example: Collection Size on a Given Date</h2>
+					<!-- TODO -->
+				</section>
+
+				<section>
+					<h2>Show Authorized Values</h2>
+					<p>Fields that use an authorized value as a controlled vocabularly store the AV <em>code</em> and not it's human readable label, but we can connect to the AV table to fix that</p>
+					<p>For example, the "itype" field in the "items" table:</p>
+				</section>
+
+				<section>
+					<h2>Public JSON Data</h2>
+					<p>You can make a report's data easily accessible to external programs by setting it to "Public" and copying its JSON URL. The URLs look like:</p>
+					<p>https://koha.library.org/cgi-bin/koha/svc/report?id=42</p>
+					<p><strong>Note: public means public!</strong> Don't use this with confidential information.</p>
+				</section>
+
+				<section>
+					<h2>Example: add MARC Field to OPAC</h2>
+					<!-- TODO check that this all works and use a different field -->
+					<p>Report with runtime parameter:</p>
+<pre><code><script type="text/template">SELECT ExtractValue(marcxml, '//datafield[@tag="245"]/subfield[@code="a"]') as title
+FROM bibliometadata bm
+WHERE bm.biblionumber = <<biblionumber>>
+</script></code></pre>
+					<p>OPACUserJS:</p>
+<pre><code>const id = new URLSearchParams(location.search).get("biblionumber")
+$.get(`https://koha.library.org/cgi-bin/koha/svc/report?id=42&sql_params=${id}`, (data) => {
+	$("#title").text(data[0].title)
+})</code></pre>
+				</section>
+
+				<section>
+					<h2>Reports Keep Getting Better!</h2>
+					<!-- TODO what else is new? -->
+					<p>ID columns (biblionumber, borrowernumber) connects to bulk operations</p>
+					<p>Field autocmompletion</p>
+				</section>
+
+				<section>
+					<h2>Questions?</h2>
+					<p><code>#reports</code> channel in BWS-Koha Partners Slack is a great place to ask for help with reports.</p>
+					<p>Thanks for coming!</p>
+				</section>
+
+				</section>
+			</div>
+		</div>
+
+		<script src="dist/reveal.js"></script>
+		<script src="plugin/notes/notes.js"></script>
+		<script src="plugin/markdown/markdown.js"></script>
+		<script src="plugin/highlight/highlight.js"></script>
+		<script>
+			// More info about initialization & config:
+			// - https://revealjs.com/initialization/
+			// - https://revealjs.com/config/
+			Reveal.initialize({
+				hash: true,
+
+				// Learn about plugins: https://revealjs.com/plugins/
+				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+			});
+		</script>
+	</body>
+</html>
