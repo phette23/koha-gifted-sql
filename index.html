@@ -18,8 +18,20 @@
 .reveal .slides p {
 	text-align: left;
 }
-.reveal .slides h2 code {
+.reveal .slides h2 code,
+.reveal .slides p code {
 	color: tomato;
+}
+.column {
+    display: flex;
+    flex-direction: row;
+}
+.column .row {
+    flex: 50%;
+    padding: 10px;
+}
+.reveal .slides .text-center {
+	text-align: center;
 }
 </style>
 	</head>
@@ -29,7 +41,8 @@
 				<section style="font-size: 80%;">
 					<h1>Koha SQL Reports</h1>
 					<h2>GiftED Community Session</h2>
-					<h3>Eric Phetteplace &lt;<a href="mailto:ephetteplace@cca.edu">ephetteplace@cca.edu</a>&gt;, Systems Librarian, California College of the Arts</h3>
+					<h3><small>Eric Phetteplace <a href="mailto:ephetteplace@cca.edu">ephetteplace@cca.edu</a>, Systems Librarian, California College of the Arts</small></h3>
+					<p class="text-center"><small>These slides are available at&nbsp;<a href="https://phette23.github.io/koha-gifted-sql/">phette23.github.io/koha-gifted-sql/</a></small></p>
 				</section>
 
 				<!-- topics:
@@ -90,12 +103,11 @@ ORDER BY b.biblionumber</code></pre>
 
 				<section>
 					<h2>Annotate combined tables</h2>
-					<p>This combined items table will have "status" column.</p>
+					<p>Combined items table has a "status" column.</p>
 <pre><code>SELECT i.status, i.itemnumber, i.itype FROM
 	(SELECT "live" as status, i.* FROM items i
 	UNION
-	SELECT "deleted" as status, di.* FROM deleteditems di) i
-ORDER BY i.itemnumber</code></pre>
+	SELECT "deleted" as status, di.* FROM deleteditems di) i</code></pre>
 <table>
 	<tr>
 		<th>status</th>
@@ -144,21 +156,42 @@ WHERE bm.biblionumber = <<biblionumber>>
 					<p>OPACUserJS:</p>
 <pre><code>const id = new URLSearchParams(location.search).get("biblionumber")
 $.get(`https://koha.library.org/cgi-bin/koha/svc/report?id=42&sql_params=${id}`, (data) => {
-	$("#title").text(data[0].title)
+	$("#title").text(data[0][0])
 })</code></pre>
 				</section>
 
 				<section>
 					<h2>Reports Keep Getting Better!</h2>
 					<!-- TODO what else is new? -->
-					<p>ID columns (biblionumber, borrowernumber) connects to bulk operations</p>
-					<p>Field autocmompletion</p>
+					<p>ID columns (biblionumber, borrowernumber) connect to bulk operations</p>
+					<p>Autocompletion</p>
+					<p>"Update and run" button</p>
+				</section>
+
+				<section>
+					<h2><code>#reports</code> channel in BWS-Partners Slack</h2>
+					<p>For instance, Koha reports won't allow the words <code>UPDATE</code>, <code>DELETE</code>, <code>DROP</code>, <code>INSERT</code>, <code>SHOW</code>, or <code>CREATE</code> <em>anywhere</em>, even in comments or strings. But folks had handy suggestions like:</p>
+<pre><code>SELECT * FROM biblio
+WHERE title LIKE CONCAT('%Rocky Horror Picture Sh','ow%')</code></pre>
 				</section>
 
 				<section>
 					<h2>Questions?</h2>
-					<p><code>#reports</code> channel in BWS-Koha Partners Slack is a great place to ask for help with reports.</p>
-					<p>Thanks for coming!</p>
+
+					<p>Thanks for coming! These slides are available at <a href="https://phette23.github.io/koha-gifted-sql/">phette23.github.io/koha-gifted-sql/</a>.</p>
+					<div class="column">
+						<div class="row">
+							<p>Eric Phetteplace</p>
+							<p>Systems Librarian</p>
+							<p>California College of the Arts</p>
+							<p><a href="https://libraries.cca.edu">libraries.cca.edu</a></p>
+						</div>
+						<div class="row">
+							<p><a href="https://digipres.club/@phette23">@phette23@digipres.club</a></p>
+							<p><a href="https://phette.net">phette.net</a></p>
+							<p><a href="https://github.com/phette23">@phette23 on GitHub</a></p>
+						</div>
+					</div>
 				</section>
 
 				</section>
