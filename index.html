@@ -131,8 +131,15 @@ ORDER BY b.biblionumber</code></pre>
 				</section>
 
 				<section>
-					<h2>Example: Collection Size on a Given Date</h2>
-					<!-- TODO -->
+					<h2>Annual Bibs Added Example</h2>
+<pre><code>SELECT YEAR(datecreated) as Year, COUNT(*) as "Records Added"
+FROM (
+  SELECT biblionumber, datecreated FROM biblio
+  UNION
+  SELECT biblionumber, datecreated FROM deletedbiblio
+) b
+WHERE YEAR(datecreated) BETWEEN 2016 AND YEAR(CURDATE())
+GROUP BY YEAR(datecreated)</code></pre>
 				</section>
 
 				<section>
@@ -169,9 +176,40 @@ ORDER BY year, month, branch</code></pre>
 
 				<section>
 					<h2><code>notforloan</code> Example</h2>
-<pre><code>
-// TODO write query
-</code></pre>
+<pre><code class="sql">SELECT i.notforloan as "NFL Code", av.lib as "Label",
+COUNT(*) as "Items"
+FROM items i
+JOIN authorised_values av ON i.notforloan = av.authorised_value
+  AND av.category = "NOT_LOAN"
+GROUP BY i.notforloan</code></pre>
+
+				<table>
+					<tr>
+						<th>NFL Code</th>
+						<th>Label</th>
+						<th>Items</th>
+					</tr>
+					<tr>
+						<td>-3</td>
+						<td>Repair</td>
+						<td>10</td>
+					</tr>
+					<tr>
+						<td>-2</td>
+						<td>In Processing</td>
+						<td>5</td>
+					</tr>
+					<tr>
+						<td>0</td>
+						<td>Available</td>
+						<td>65,735</td>
+					</tr>
+				</table>
+
+				<aside class="notes">
+					Here's a concrete example of linking the items "not for loan" code to the text description of the code. There are at least two things to be aware of when connecting to the authorised_values table. First, there are two description fields, "lib" and "lib_opac". These are rendered in Koha administration as "Description" and "Description (OPAC)" so it's staff versus public descriptions. Also, either of these descriptions can be empty, so be careful to always <code>GROUP BY</code> the code and not the description. You could provide a default description in the query using an <code>IFNULL</code> or <code>CASE</code> statement.
+					Secondly, multiple authorized value categories use the same codes. A "-1" might mean "on order" for notforloan and mean "long overdue" for itemlost. So when you <code>JOIN</code> to the authorised_values table, you should always <code>JOIN</code> on both the code and the category. <code>JOIN</code>ing on multiple conditions isn't something you think of when writing SQL, at least I don't, so it's worth mentioning.
+				</aside>
 				</section>
 
 				<section>
