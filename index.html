@@ -51,8 +51,8 @@
 					x deleted* tables
 					statistics versus issues table
 					x public JSON links
-					reports keep getting better! batch processing, autocomplete
-					get help from #reports channel in bywater slack
+					x reports keep getting better! batch processing, autocomplete
+					x get help from #reports channel in bywater slack
 				 -->
 
 				<section>
@@ -130,6 +130,33 @@ ORDER BY b.biblionumber</code></pre>
 				<section>
 					<h2>Example: Collection Size on a Given Date</h2>
 					<!-- TODO -->
+				</section>
+
+				<section>
+					<h2><code>statistics</code> versus <code>issues</code> table</h2>
+					<p>Rather than combine <code>issues</code> & <code>oldissues</code> for circulation figures, use <code>statistics</code>.</p>
+					<p>The <code>issues</code> tables have no item information & <code>JOIN</code>ing them to the <code>items</code> tables does not account for changes in item type or location since the checkout occurred.</p>
+
+					<aside class="notes">
+						I think intuitively when one goes to build a circulation report, we turn to the "issues" tables that hold old and current checkouts. But the issues don't record any item information, so to look at properties like item type, location, branch, etc. we have to join to the items table. But the items table is for <em>current</em>, not historical, information.
+						Consider this example: a faculty member puts an item on reserve which we implement by changing the item type to "2DAYRESERVE" and that changes the circulation rules for the item. Several students check out the item. After the term ends, the title is returned to the main shelves and it's item type reset to "BOOK". A report which uses the "issues" table would show this as a "BOOK" checkout, not a "2DAYRESERVE" checkout.
+						That's where the "statistics" table comes in. It records the item type, shelving location, branch, collection code, and patron category <em>at the time of the checkout</em>.
+					</aside>
+				</section>
+
+				<section>
+					<h2>Checkouts by Branch</h2>
+					<p>SQL by Nicole C. Engard, ByWater Solutions</p>
+<pre><code>SELECT branch,
+MONTH(datetime) AS month,
+YEAR(datetime) AS year,
+COUNT(datetime) AS checkouts
+FROM statistics
+WHERE type LIKE 'issue'
+GROUP BY branch, year, month
+ORDER BY year ASC, month ASC, branch ASC</code></pre>
+
+<aside class="notes">Here's an example circulation report using the statistics table which was written by Nicole C. Engard. It shows checkouts per month per branch. We closed one of our branches, but this report still shows that branches historical checkouts, because it uses the statistics table.</aside>
 				</section>
 
 				<section>
