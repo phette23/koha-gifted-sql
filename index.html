@@ -33,6 +33,9 @@
 .reveal .slides .text-center {
 	text-align: center;
 }
+code span.purp {
+	color: blueviolet;
+}
 </style>
 	</head>
 	<body>
@@ -58,18 +61,16 @@
 				<section>
 					<h2>Session Specifics</h2>
 					<p>General tips and tricks specific to <em>Koha</em> SQL reports and not SQL queries in general.</p>
-					<p>There will definitely be some SQL on slides but hopefully nothing too arcane.</p>
-					<p>I'm no SQL expert! Please chime in with your own ideas in chat.</p>
+					<p class="fragment">There will definitely be some SQL on slides but hopefully nothing too arcane.</p>
+					<p class="fragment">I'm no SQL expert! Please chime in with your own ideas in chat.</p>
 				</section>
 
 				<section>
 					<h2>What's in a table?</h2>
 
-					<ul>
-						<li><a href="https://wiki.koha-community.org/wiki/SQL_Reports_Library">Reports Library</a></li>
-						<li>Schema <a href="https://schema.koha-community.org/">schema.koha-community.org/</a></li>
-						<li>"Search engine" links to any given table</li>
-					</ul>
+					<p>Use the <a href="https://wiki.koha-community.org/wiki/SQL_Reports_Library">Reports Library</a></p>
+					<p class="fragment">Schema <a href="https://schema.koha-community.org/">schema.koha-community.org/</a></p>
+					<p class="fragment">"Search engine" links to any given table: <code>https://schema.koha-community.org/23_05/tables/<span class="purp">%s</span>.html</code></p>
 
 					<aside class="notes">
 						Let's start with how to find the data you're looking for in Koha's many database tables. The most obvious places to look at the ones shown right in the reports
@@ -80,15 +81,17 @@
 					<h2>Experimental Queries</h2>
 					<p>Peek at what's in a particular table:</p>
 					<pre><code>SELECT * FROM deletedbiblio</code></pre>
-					<p>Enumerate the values in a field:</p>
-					<pre class="fragment"><code>SELECT DISTINCT itype FROM items ORDER BY itype</code></pre>
+					<div class="fragment">
+						<p>Enumerate the values in a field:</p>
+						<pre><code>SELECT DISTINCT itype FROM items ORDER BY itype</code></pre>
+					</div>
 				</section>
 
 				<section>
 					<h2><code>deleted*</code> tables</h2>
 					<p>Deleted biblios (and their metadata), items, and borrowers (patrons) are not removed from the database permanently but transferred to a new table with a "deleted" prefix.</p>
 					<p>Similarly, past issues (checkouts) and holds (reserves) are moved to tables prefixed with "old".</p>
-					<p>Many reports, to be entirely accurate, must factor in these "deleted" or "old" tables.</p>
+					<p>Many reports, to be accurate, must factor in these "deleted" or "old" tables.</p>
 				</section>
 
 				<section>
@@ -154,35 +157,43 @@ COUNT(datetime) AS checkouts
 FROM statistics
 WHERE type LIKE 'issue'
 GROUP BY branch, year, month
-ORDER BY year ASC, month ASC, branch ASC</code></pre>
+ORDER BY year, month, branch</code></pre>
 
 <aside class="notes">Here's an example circulation report using the statistics table which was written by Nicole C. Engard. It shows checkouts per month per branch. We closed one of our branches, but this report still shows that branches historical checkouts, because it uses the statistics table.</aside>
 				</section>
 
 				<section>
-					<h2>Show Authorized Values</h2>
-					<p>Fields that use an authorized value as a controlled vocabularly store the AV <em>code</em> and not it's human readable label, but we can connect to the AV table to fix that</p>
-					<p>For example, the "itype" field in the "items" table:</p>
+					<h2>Translate Authorized Value Codes</h2>
+					<p>Fields that use an authorized value as a controlled vocabularly store the Authorized Value <em>code</em> and not it's human readable label, but we can connect to the <code>authorised_values</code> table to make the data more human readable.</p>
+				</section>
+
+				<section>
+					<h2><code>notforloan</code> Example</h2>
+<pre><code>
+// TODO write query
+</code></pre>
 				</section>
 
 				<section>
 					<h2>Public JSON Data</h2>
 					<p>You can make a report's data easily accessible to external programs by setting it to "Public" and copying its JSON URL. The URLs look like:</p>
-					<p>https://koha.library.org/cgi-bin/koha/svc/report?id=42</p>
-					<p><strong>Note: public means public!</strong> Don't use this with confidential information.</p>
+					<p><code>https://koha.library.org/cgi-bin/koha/svc/report?id=<span class="purp">42</span></code></p>
+					<p><strong>Note: public means public!</strong> Don't include confidential information.</p>
 				</section>
 
 				<section>
 					<h2>Example: add MARC Field to OPAC</h2>
 					<!-- TODO check that this all works and use a different field -->
 					<p>Report with runtime parameter:</p>
-<pre><code><script type="text/template">SELECT ExtractValue(marcxml, '//datafield[@tag="245"]/subfield[@code="a"]') as title
+<pre><code><script type="text/template">SELECT ExtractValue(marcxml,
+'//datafield[@tag="245"]/subfield[@code="a"]') as title
 FROM bibliometadata bm
 WHERE bm.biblionumber = <<biblionumber>>
 </script></code></pre>
 					<p>OPACUserJS:</p>
-<pre><code>const id = new URLSearchParams(location.search).get("biblionumber")
-$.get(`https://koha.library.org/cgi-bin/koha/svc/report?id=42&sql_params=${id}`, (data) => {
+<pre><code>const id = new URLSearchParams(location.search).get(
+"biblionumber"); $.get(`.../koha/svc/report?id=42
+&sql_params=${id}`, (data) => {
 	$("#title").text(data[0][0])
 })</code></pre>
 				</section>
