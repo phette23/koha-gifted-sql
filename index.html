@@ -221,19 +221,22 @@ GROUP BY i.notforloan</code></pre>
 
 				<section>
 					<h2>Example: add MARC Field to OPAC</h2>
-					<!-- TODO check that this all works and use a different field -->
 					<p>Report with runtime parameter:</p>
-<pre><code><script type="text/template">SELECT ExtractValue(marcxml,
-'//datafield[@tag="245"]/subfield[@code="a"]') as title
-FROM bibliometadata bm
-WHERE bm.biblionumber = <<biblionumber>>
+<pre><code><script type="text/template">SELECT ExtractValue(metadata, '//datafield[@tag="948"]/*')
+FROM biblio_metadata
+WHERE biblionumber = <<biblionumber>>
 </script></code></pre>
-					<p>OPACUserJS:</p>
-<pre><code>const id = new URLSearchParams(location.search).get(
-"biblionumber"); $.get(`.../koha/svc/report?id=42
-&sql_params=${id}`, (data) => {
-	$("#title").text(data[0][0])
-})</code></pre>
+					<p>JavaScript in OPACUserJS:</p>
+<pre><code class="js"><script type="text/template">let i = new URLSearchParams(location.search).get('biblionumber')
+$.get(`.../koha/svc/report?id=42&sql_params=${i}`, (data) => {
+if (data.length) $('.record').append(`<span
+class="results_summary"><span class="label">OCLC Holdings:
+</span>${data[0][0]}</span>`)})</script></code></pre>
+
+				<aside class="notes">
+					Here's a contrived example of how you might use a public report to add a field that's in your MARC records but not displayed to the page. First, we have a simple report which returns the MARC field's value from the database using the <code>ExtractValue</code> function. I haven't mentioned runtime parameters yet, but they're super useful—they let you change the criteria of a report each time it's executed. Here, the report looks up metadata for a different bib based on its biblionumber using the parameter.
+					Next, we use Koha's OPACUserJS setting to add some JavaScript that will run on our public catalog records. This code is hard to read but it looks up the biblionumber for the current record from the URL, passes that id to the report, and if we get any data back from the report we label it and append it to the record display. Note that public reports always return an array of arrays; there's one array for each row the report returns. With this code, we can add the OCLC holdings information contained in the 948 local use tag to the record without needing to modify Koha's XSLT templates.
+				</aside>
 				</section>
 
 				<section>
