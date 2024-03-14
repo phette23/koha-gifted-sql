@@ -189,10 +189,19 @@ $.get(`https://koha.library.org/cgi-bin/koha/svc/report?id=42&sql_params=${id}`,
 
 				<section>
 					<h2>Reports Keep Getting Better!</h2>
-					<!-- TODO what else is new? -->
-					<p>ID columns (biblionumber, borrowernumber) connect to bulk operations</p>
-					<p>Autocompletion</p>
-					<p>"Update and run" button</p>
+
+					<div class="column">
+						<div class="row">
+							<p>ID columns connect to bulk operations</p>
+							<p>"Update and run" button</p>
+							<p>Autocompletion</p>
+							<p>Graphs</p>
+						</div>
+						<div class="row">
+							<img height="400px" src="img/graph.png" alt="a pie chart of items per library branch showing 81.3% of items are in SF, 15.8% are in Oak, and 2.9% in MATLIB.">
+						</div>
+					</div>
+
 				</section>
 
 				<section>
