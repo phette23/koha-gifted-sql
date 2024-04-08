@@ -208,6 +208,10 @@ ORDER BY year, month, branch</code></pre>
 				<section>
 					<h2>Translate Authorized Value Codes</h2>
 					<p>Fields that use an authorized value as a controlled vocabularly store the Authorized Value <em>code</em> and not it's human readable label, but we can connect to the <code>authorised_values</code> table.</p>
+
+					<aside class="notes">
+						Authorized values are a sort of controlled vocabulary in Koha. They're used for things like item types, locations, various item statuses, and more. For instance, the items "itype" report I showed earlier does not return descriptive labels but terse codes like "LIBUSEBK" (for "Library Use Book") and "NEWPER" (for "New Periodical"). Often, we would prefer to show the human-readable label in our reports, and we can do that by joining to the "authorised_values" table.
+					</aside>
 				</section>
 
 				<section>
@@ -243,7 +247,7 @@ GROUP BY i.notforloan</code></pre>
 				</table>
 
 				<aside class="notes">
-					Here's a concrete example of linking the items "not for loan" code to the text description of the code. There are at least two things to be aware of when connecting to the authorised_values table. First, there are two description fields, "lib" and "lib_opac". These are rendered in Koha administration as "Description" and "Description (OPAC)" so it's staff versus public descriptions. Also, either of these descriptions can be empty, so be careful to always <code>GROUP BY</code> the code and not the description. We could provide a default description in the query using an <code>IFNULL</code> or <code>CASE</code> statement.
+					Here's a concrete example of linking the items "not for loan" code to the text description of the code. There are at least two things to be aware of when connecting to the authorised_values table. First, there are two description fields, "lib" and "lib_opac". These are rendered in Koha administration as "Description" and "Description (OPAC)" so they are staff versus public descriptions. Also, either of these descriptions can be empty, so be careful to always <code>GROUP BY</code> the code and not the description. We could provide a default description in the query using an <code>IFNULL</code> or <code>CASE</code> statement.
 					Secondly, multiple authorized value categories use the same codes. A "-1" might mean "on order" for notforloan and mean "long overdue" for itemlost. So when we <code>JOIN</code> to the authorised_values table, we should always <code>JOIN</code> on both the code and the category. <code>JOIN</code>ing on multiple conditions isn't something I often think of when writing SQL, so it's worth mentioning.
 				</aside>
 				</section>
@@ -253,6 +257,12 @@ GROUP BY i.notforloan</code></pre>
 					<p>Make a report's data easily accessible to external programs by setting it to "Public" and copying its JSON URL. The URLs look like:</p>
 					<p><code>https://koha.library.org/cgi-bin/koha/svc/report?id=<span class="purp">42</span></code></p>
 					<p><strong>Note: public means public!</strong> Don't include confidential information.</p>
+
+					<aside class="notes">
+						Another nifty feature of Koha reports is the ability to make their data easily available to other applications. When you set a report to "Public", other programs can use the report's JSON URL to obtain its data.
+
+						It is worth noting that "public" truly means public, so reports that show confidential information about patrons should not be made public. But much of your Koha data is already public, like bibliographic records, and aggregated statistics about records or patrons are also safe. One could easily envision building a web dashboard using several public Koha reports to show information like currently checked out titles, number of registered patrons, or recent acquisitions.
+					</aside>
 				</section>
 
 				<section>
@@ -271,7 +281,7 @@ class="results_summary"><span class="label">OCLC Holdings:
 
 				<aside class="notes">
 					Here's a contrived example of how we might use a public report to add a field that's in our MARC records but not displayed to the page. First, we have a simple report which returns the MARC field's value from the database using the <code>ExtractValue</code> function. I haven't mentioned runtime parameters yet, but they're super useful—they let us change the criteria of a report each time it's executed. Here, the report looks up metadata for a different bib based on its biblionumber using the parameter.
-					Next, we use Koha's OPACUserJS setting to add some JavaScript that will run on our public catalog records. This code is hard to read but it looks up the biblionumber for the current record from the URL, passes that id to the report, and if we get any data back from the report we label it and append it to the record display. Note that public reports always return an array of arrays; there's one array for each row the report returns. With this code, we can add the OCLC holdings information contained in the 948 local use tag to the record without needing to modify Koha's XSLT templates.
+					Next, we use Koha's OPACUserJS setting to add some JavaScript that will run on our public catalog records. This code is hard to read but it looks up the biblionumber for the current record from the URL, passes that id to the report, and if we get any data back from the report we label it and append it to the record display. Note that the report's JSON is always an array of arrays; there's one child array for each row the report returns. This code adds the OCLC holdings information contained in the 948 local use tag to the record without needing to modify Koha's XSLT templates.
 				</aside>
 				</section>
 
@@ -288,6 +298,18 @@ class="results_summary"><span class="label">OCLC Holdings:
 						<div class="row">
 							<img height="400px" src="img/graph.png" alt="a pie chart of items per library branch showing 81.3% of items are in SF, 15.8% are in Oak, and 2.9% in MATLIB.">
 						</div>
+
+						<aside class="notes">
+							I'm done listing my Koha SQL tips, but I want to take some time to appreciate all the excellent work that's going into making reports better. There have been so many quality of life improvements to reports over the past few years it's hard to remember them all. Many of these I use virtually every time I interact with reports.
+
+							If your <code>SELECT</code> statement includes a table's identifier column, like biblionumber/itemnumber/borrowernumber, there are now buttons in the report's output that connect to bulk operations. So we can go directly from a report show items to item bulk modifications, for instance.
+
+							In addition to the "save" and "run" buttons, there's now an "update and run" button. This may seem like a small deal, but it saves me so much time when refining a report, or using my "neverending query" which I edit and rerun frequently.
+
+							Field autocompletion was also added recently which can really help you type out reports quickly or remember some obscure field names.
+
+							Finally, reports that return numeric values can now generate graphs like a pie chart or time series.
+						</aside>
 					</div>
 
 				</section>
@@ -297,6 +319,12 @@ class="results_summary"><span class="label">OCLC Holdings:
 					<p>For instance, Koha reports won't allow the words <code>UPDATE</code>, <code>DELETE</code>, <code>DROP</code>, <code>INSERT</code>, <code>SHOW</code>, or <code>CREATE</code> <em>anywhere</em>, even in comments or strings. But folks suggested handy tricks like:</p>
 <pre><code>SELECT * FROM biblio
 WHERE title LIKE CONCAT('%Rocky Horror Picture Sh','ow%')</code></pre>
+
+					<aside class="notes">
+						I mentioned that I am no SQL expert, but the Koha commmunity has some folks that truly are SQL wizards. There's a lot of activity in the reports channel of the ByWater Partners Slack organization where people ask questions or share their own fancy reports. One kind of comical example recently was different ways to work around how Koha reports censor certain SQL keywords for security purposes. If you want to use a word like "show" or "create" in a <code>WHERE</code> condition, you can use <code>CONCAT</code> so that the letters don't appear in sequence. A really clever workaround!
+
+						If you're not a ByWater customer, the main Koha Community Slack also has a reports channel for such discussions.
+					</aside>
 				</section>
 
 				<section>
