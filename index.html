@@ -45,14 +45,14 @@ code span.purp {
 					<h1>Koha SQL Reports</h1>
 					<h2>GiftED Community Session</h2>
 					<h3><small>Eric Phetteplace <a href="mailto:ephetteplace@cca.edu">ephetteplace@cca.edu</a>, Systems Librarian, California College of the Arts</small></h3>
-					<p class="text-center"><small>These slides are available at&nbsp;<a href="https://phette23.github.io/koha-gifted-sql/">phette23.github.io/koha-gifted-sql/</a></small></p>
+					<p class="text-center"><small>These slides are available at&nbsp;<a href="https://phette23.github.io/koha-gifted-sql/">phette23.github.io/koha-gifted-sql/</a>.</small></p>
 				</section>
 
 				<section>
-					<h2>Session Specifics</h2>
-					<p>General tips and tricks specific to <em>Koha</em> SQL reports and not SQL queries in general.</p>
-					<p class="fragment">There will definitely be some SQL on slides but hopefully nothing too arcane.</p>
-					<p class="fragment">I'm no SQL expert! Please chime in with your own ideas in chat.</p>
+					<h2>Session specifics</h2>
+					<p>Tips and tricks specific to <em>Koha</em> reports but not SQL in general.</p>
+					<p class="fragment">There will be some SQL on slides but hopefully nothing too arcane.</p>
+					<p class="fragment">I'm no expert! Please chime in with your own ideas in chat.</p>
 
 					<aside class="notes">
 						I want to talk about SQL reports, but specifically the nuances of writing them in Koha. So I will mostly not cover how to write SQL in general, nor the Guided Reports that let you construct a query without writing SQL but are somewhat limited.
@@ -66,23 +66,23 @@ code span.purp {
 				<section>
 					<h2>What's in a table?</h2>
 
-					<p>Use the <a href="https://wiki.koha-community.org/wiki/SQL_Reports_Library">Reports Library</a></p>
-					<p class="fragment">Schema <a href="https://schema.koha-community.org/">schema.koha-community.org/</a></p>
+					<p>See the <a href="https://wiki.koha-community.org/wiki/SQL_Reports_Library">Reports Library</a></p>
+					<p class="fragment">And Schema <a href="https://schema.koha-community.org/">schema.koha-community.org/</a></p>
 					<p class="fragment">"Search engine" links to any given table: <code>https://schema.koha-community.org/23_05/tables/<span class="purp">%s</span>.html</code></p>
 
 					<aside class="notes">
-						Let's start with how to find the data we're looking for in Koha's many database tables. The most obvious places to look at the ones shown right in the reports; the Reports library and the database schema.
+						Let's start with how to find the data we're looking for in Koha's many database tables. The most obvious places to look at are the ones shown right in the reports module; the Reports library and the database schema.
 
-						The Reports library is a great starting place for any report, because no matter how specific our needs are, there's a good chance someone has written something similar. Most of my reports start by coping something from the library or from our existing reports.
+						The Reports library is a great starting place, because no matter how specific our needs are, there's a good chance someone has written something similar. Most of my reports start by coping something from the library or from our existing reports.
 
-						Secondly, the schema website is a great resource for understanding the structure of Koha's database. It shows what fields are on what tables, what type of data—like integer, text, timestamp—a field is, and shows relationships between tables.
+						Secondly, the schema website is a great resource for understanding the structure of Koha's database. It shows what fields are on what tables, what type of dataa field is—like integer, text, timestamp—and shows relationships between tables.
 
-						One trick that I use frequently is a Chrome "search engine" that lets me quickly jump to a particular table in the schema. Browser search engines replace the "%s" token in your search engine URL with whatever you type, so I can type my "sq" keyword and then "items" in my address bar to go to the items table in the schema.
+						One trick that I use frequently is a Chrome "search engine" that quickly jumps to a particular table in the schema. Browser search engines replace the "%s" token in your search engine URL with whatever you type, so I can type my "sq" keyword and then "items" in my address bar to go to the items table in the schema.
 					</aside>
 				</section>
 
 				<section>
-					<h2>Experimental Queries</h2>
+					<h2>Experimental queries</h2>
 					<p>Peek at what's in a particular table:</p>
 <pre><code>SELECT * FROM deletedbiblio</code></pre>
 					<div class="fragment">
@@ -95,9 +95,9 @@ GROUP BY itype ORDER BY itype</code></pre>
 					</div>
 
 					<aside class="notes">
-						The schema shows an abstract outline of the database but without showing us the actual values from our Koha instance. I commonly use some very simple queries to peek at our database. The first one is just a <code>SELECT * FROM</code> query on a table I'm interested in. This is a good way to see what fields are in a table and what kind of data they contain.
+						The schema shows an abstract outline of the database without the actual values from our Koha instance. I commonly use some simple queries to peek at our database contents. The first one is a <code>SELECT * FROM</code> query on a table I'm interested in. This shows what fields are in a table and what kind of data they contain.
 
-						A useful variant is to use <code>SELECT DISTINCT</code> to enumerate all the values a field takes on in our database. We can further refine this by adding a <code>COUNT(*)</code> to see how many times each value appears. This is a good way to see the distribution of values in a field and to test our assumptions about different fields.
+						A useful variant is to <code>SELECT DISTINCT</code> to enumerate all the values a field takes on in our database. We can further refine this by adding a <code>COUNT(*)</code> to see how many times each value appears. This shows the distribution of values in a field.
 
 						To run these quick, simple queries I have one reusable report I call "Eric's Neverending Query" that I edit and run over and over again. This way our reports library isn't cluttered with one-off queries.
 					</aside>
@@ -105,16 +105,14 @@ GROUP BY itype ORDER BY itype</code></pre>
 
 				<section>
 					<h2><code>deleted*</code> tables</h2>
-					<p>Deleted biblios (and their metadata), items, and borrowers (patrons) are not removed from the database permanently but transferred to a new table with a "deleted" prefix.</p>
+					<p>Deleted biblios, metadata, items, and borrowers (patrons) are not removed from the database permanently but transferred to a table with a "deleted" prefix.</p>
 					<p>Similarly, past issues (checkouts) and holds (reserves) are moved to tables prefixed with "old".</p>
-					<p>Many reports, to be accurate, must factor in these "deleted" or "old" tables.</p>
+					<p>To be accurate, many reports must factor in these "deleted" or "old" tables.</p>
 
 					<aside class="notes">
-						One special peculiarity of Koha is how deleted data is handled. One might assume, when a type of record is deleted, it's removed from the database, but that would be irreverisible and make many reports misleading or inaccurate. Another approach many applications take is to have a boolean "deleted" field on a table which is changed from a 0 to a 1 when an object is deleted.
+						One peculiarity of Koha is how deleted data is handled. One might assume, when a type of record is deleted, it's removed from the database, but that would be irreverisible and make some reports misleading. Instead, Koha moves deleted database rows from one table to another table with a "deleted" prefix. So when we delete a biblio, it moves from "biblio" to the "deletedbiblio" table. Similarly, once a checkout is returned or a hold fulfilled, rows move to tables prefixed with "old" to indicate they're no longer active.
 
-						Koha uses neither of those approaches. Instead, for biblios, their metadata records, items, and patrons, Koha moves deleted database rows from one table to another table with a "deleted" prefix. So when we delete a biblio, it moves from "biblio" to the "deletedbiblio" table. Similarly, once a checkout is returned or a hold fulfilled, rows move to tables prefixed with "old" to indicate they're no longer active.
-
-						Why is this important? Without factoring in these deleted or old tables, some reports are inaccurate. Any historical report which isn't looking at the current state of Koha but at how it has changed over time would be slightly off, for instance.
+						Why is this important? Without factoring in these deleted or old tables, some reports are inaccurate. Any historical report which isn't looking at the current state of Koha but at how it changed over time would be slightly off.
 					</aside>
 				</section>
 
@@ -128,13 +126,13 @@ GROUP BY itype ORDER BY itype</code></pre>
 ORDER BY b.biblionumber</code></pre>
 
 				<aside class="notes">
-					So how do we factor in these deleted tables? We use the SQL UNION operator. UNION combines the results of two SELECT statements with a similar shape—the two statements should return the same number of columns and the columns should be of the same type. Of course, the biblio and deletedbiblio tables have the exact same structure, so they work with UNION. We put the UNION inside a subquery by wrapping it in parentheses and then we treat the subquery as the table of all our biblios, deleted or not, which we can SELECT fields from, JOIN to other tables, and filter with WHERE criteria.
+					So how do we factor in these deleted tables? We use the SQL <code>UNION</code> operator. <code>UNION</code> combines the results of two <code>SELECT</code> statements with the same shape—the two statements must return the same number of columns and the columns should be of the same type. Of course, the biblio and deletedbiblio tables have the exact same schema, so they work. We put the <code>UNION</code> inside a subquery by wrapping it in parentheses and then we treat the subquery as the table of all our biblios, deleted or not, which we can <code>SELECT</code> fields from, <code>JOIN</code> to other tables, and filter with <code>WHERE</code> criteria.
 				</aside>
 				</section>
 
 				<section>
 					<h2>Annotate combined tables</h2>
-					<p>Combined items table has a "status" column.</p>
+					<p>This combined items table has a "status" column.</p>
 <pre><code>SELECT i.status, i.itemnumber, i.itype FROM
 	(SELECT "live" as status, i.* FROM items i
 	UNION
@@ -158,12 +156,12 @@ ORDER BY b.biblionumber</code></pre>
 </table>
 
 				<aside class="notes">
-					Sometimes, we might want to join a live and deleted table but keep track of which table our records came from. It's possible to sort of "annotate" the combined table by adding a column that indicates the source of the record. Here's an example where we combine the items and deleteditems tables and add a "status" column that tells us whether the record is from the live or deleted table. Because we added the status column to both the items and deleteditems tables, they still have the same shape, and the UNION works.
+					Sometimes, we might want to join a live and deleted table but keep track of which table our records came from. It's possible to sort of "annotate" the combined table by adding a column that indicates the source of the record. Here's an example where we combine the items and deleteditems tables and add a "status" column that tells us whether the record is from the live or deleted table. Because we added the status column to both the items and deleteditems tables, they still have the same shape, and the <code>UNION</code> works.
 				</aside>
 				</section>
 
 				<section>
-					<h2>Annual Bibs Added Example</h2>
+					<h2>Annual bibs added</h2>
 <pre><code>SELECT YEAR(datecreated) as Year, COUNT(*) as "Records Added"
 FROM (
   SELECT biblionumber, datecreated FROM biblio
@@ -184,14 +182,14 @@ GROUP BY YEAR(datecreated)</code></pre>
 					<p>The <code>issues</code> tables have no item information & <code>JOIN</code>ing them to the <code>items</code> tables does not account for changes in item type or location since the checkout occurred.</p>
 
 					<aside class="notes">
-						Intuitively, when we go to build a circulation report, we turn to the "issues" tables that hold old and current checkouts. But the issues don't record any item information, so to look at properties like item type, location, branch, etc. we have to join to the items table. But the items table is for <em>current</em>, not historical, information.
+						Intuitively, when we build a circulation report, we might turn to the "issues" tables that hold old and current checkouts. But the issues don't record item details, so to look at properties like item type, location, branch, etc. we have to join to the items table. But the items table is for an item's <em>current</em> status, not its historical status <em>at the time the checkout occurred</em>.
 						Consider this example: a faculty member puts an item on reserve which we implement by changing the item type to "2DAYRESERVE" and that changes the circulation rules for the item. Several students check out the item. After the term ends, the title is returned to the main shelves and it's item type reset to "BOOK". A report which uses the "issues" table would show this as a "BOOK" checkout, not a "2DAYRESERVE" checkout.
-						That's where the "statistics" table comes in. It records the item type, shelving location, branch, collection code, and patron category <em>at the time of the checkout</em>.
+						That's where the "statistics" table comes in. It records the item type, shelving location, branch, collection code, and patron category at the time of the checkout.
 					</aside>
 				</section>
 
 				<section>
-					<h2>Checkouts by Branch</h2>
+					<h2>Checkouts by branch</h2>
 					<p>SQL by Nicole C. Engard, ByWater Solutions</p>
 <pre><code>SELECT branch,
 MONTH(datetime) AS month,
@@ -202,20 +200,22 @@ WHERE type LIKE 'issue'
 GROUP BY branch, year, month
 ORDER BY year, month, branch</code></pre>
 
-<aside class="notes">Here's an example circulation report using the statistics table which was written by Nicole C. Engard. It shows checkouts per month per branch. We closed one of our branches, but this report still shows that branches historical checkouts, because it uses the statistics table instead of issues.</aside>
-				</section>
-
-				<section>
-					<h2>Translate Authorized Value Codes</h2>
-					<p>Fields that use an authorized value as a controlled vocabularly store the Authorized Value <em>code</em> and not it's human readable label, but we can connect to the <code>authorised_values</code> table.</p>
-
 					<aside class="notes">
-						Authorized values are a sort of controlled vocabulary in Koha. They're used for things like item types, locations, various item statuses, and more. For instance, the items "itype" report I showed earlier does not return descriptive labels but terse codes like "LIBUSEBK" (for "Library Use Book") and "NEWPER" (for "New Periodical"). Often, we would prefer to show the human-readable label in our reports, and we can do that by joining to the "authorised_values" table.
+						Here's an example circulation report using the statistics table which was written by Nicole C. Engard. It shows checkouts per month per branch. We closed one of our branches, but this report still shows that branches historical checkouts, because it uses the statistics table instead of issues.
 					</aside>
 				</section>
 
 				<section>
-					<h2><code>notforloan</code> Example</h2>
+					<h2>Translate authorized value codes</h2>
+					<p>Fields that use an authorized value as a controlled vocabularly store the Authorized Value <em>code</em> and not it's human readable label, but we can connect to the <code>authorised_values</code> table.</p>
+
+					<aside class="notes">
+						Authorized values are a sort of controlled vocabulary in Koha. They're used for item types, locations, various item statuses, and more. For instance, the items "itype" report from earlier does not return descriptive labels but terse codes like "LIBUSEBK" (for "Library Use Book") and "NEWPER" (for "New Periodical"). Often, we would prefer to show human-readable labels in reports and we can do that by joining to the "authorised_values" table.
+					</aside>
+				</section>
+
+				<section>
+					<h2><code>notforloan</code> example</h2>
 <pre><code class="sql">SELECT i.notforloan as "NFL Code", av.lib as "Label",
 COUNT(*) as "Items"
 FROM items i
@@ -247,26 +247,26 @@ GROUP BY i.notforloan</code></pre>
 				</table>
 
 				<aside class="notes">
-					Here's a concrete example of linking the items "not for loan" code to the text description of the code. There are at least two things to be aware of when connecting to the authorised_values table. First, there are two description fields, "lib" and "lib_opac". These are rendered in Koha administration as "Description" and "Description (OPAC)" so they are staff versus public descriptions. Also, either of these descriptions can be empty, so be careful to always <code>GROUP BY</code> the code and not the description. We could provide a default description in the query using an <code>IFNULL</code> or <code>CASE</code> statement.
-					Secondly, multiple authorized value categories use the same codes. A "-1" might mean "on order" for notforloan and mean "long overdue" for itemlost. So when we <code>JOIN</code> to the authorised_values table, we should always <code>JOIN</code> on both the code and the category. <code>JOIN</code>ing on multiple conditions isn't something I often think of when writing SQL, so it's worth mentioning.
+					Here we link items' "not for loan" values to their descriptions. There are at least two things to be aware of when connecting to the authorised_values table. First, there are two description fields, "lib" and "lib_opac". These are rendered in Koha administration as "Description" and "Description (OPAC)"—they are staff versus public descriptions. Also, either of these descriptions can be empty, so be careful to always <code>GROUP BY</code> the code and not the description. We could provide a default description in the query using an <code>IFNULL</code> or <code>CASE</code> statement.
+					Secondly, multiple authorized value categories use the same values. A "-1" might mean "on order" for notforloan and mean "long overdue" for itemlost. So when we <code>JOIN</code> to the authorised_values table, we must <code>JOIN</code> on both the value and the category. <code>JOIN</code>ing on multiple conditions isn't something I often think of when writing SQL, so it's worth mentioning.
 				</aside>
 				</section>
 
 				<section>
-					<h2>Public JSON Data</h2>
+					<h2>Public JSON data</h2>
 					<p>Make a report's data easily accessible to external programs by setting it to "Public" and copying its JSON URL. The URLs look like:</p>
 					<p><code>https://koha.library.org/cgi-bin/koha/svc/report?id=<span class="purp">42</span></code></p>
-					<p><strong>Note: public means public!</strong> Don't include confidential information.</p>
+					<p><strong>Public means public!</strong> Don't include confidential information.</p>
 
 					<aside class="notes">
 						Another nifty feature of Koha reports is the ability to make their data easily available to other applications. When you set a report to "Public", other programs can use the report's JSON URL to obtain its data.
 
-						It is worth noting that "public" truly means public, so reports that show confidential information about patrons should not be made public. But much of your Koha data is already public, like bibliographic records, and aggregated statistics about records or patrons are also safe. One could easily envision building a web dashboard using several public Koha reports to show information like currently checked out titles, number of registered patrons, or recent acquisitions.
+						"Public" truly means public, so reports that show confidential information about patrons should not be made public. But much of your Koha data is already public, like bibliographic records, and aggregated statistics about records or patrons are also safe. One could envision building a web dashboard using several public Koha reports to show currently checked out titles, number of registered patrons, recent acquisitions, etc.
 					</aside>
 				</section>
 
 				<section>
-					<h2>Example: add MARC Field to OPAC</h2>
+					<h2>Add 948 to OPAC</h2>
 					<p>Report with runtime parameter:</p>
 <pre><code><script type="text/template">SELECT ExtractValue(metadata, '//datafield[@tag="948"]/*')
 FROM biblio_metadata
@@ -275,18 +275,21 @@ WHERE biblionumber = <<biblionumber>>
 					<p>JavaScript in OPACUserJS:</p>
 <pre><code class="js"><script type="text/template">let i = new URLSearchParams(location.search).get('biblionumber')
 $.get(`.../koha/svc/report?id=42&sql_params=${i}`, (data) => {
-if (data.length) $('.record').append(`<span
-class="results_summary"><span class="label">OCLC Holdings:
-</span>${data[0][0]}</span>`)})</script></code></pre>
+  if (data.length) {
+  	$('.record').append(`<span class="results_summary">
+		<span class="label">OCLC Holdings:</span>
+		${data[0][0]}</span>`)
+  }
+})</script></code></pre>
 
 				<aside class="notes">
 					Here's a contrived example of how we might use a public report to add a field that's in our MARC records but not displayed to the page. First, we have a simple report which returns the MARC field's value from the database using the <code>ExtractValue</code> function. I haven't mentioned runtime parameters yet, but they're super useful—they let us change the criteria of a report each time it's executed. Here, the report looks up metadata for a different bib based on its biblionumber using the parameter.
-					Next, we use Koha's OPACUserJS setting to add some JavaScript that will run on our public catalog records. This code is hard to read but it looks up the biblionumber for the current record from the URL, passes that id to the report, and if we get any data back from the report we label it and append it to the record display. Note that the report's JSON is always an array of arrays; there's one child array for each row the report returns. This code adds the OCLC holdings information contained in the 948 local use tag to the record without needing to modify Koha's XSLT templates.
+					Next, we use Koha's OPACUserJS setting to add some JavaScript that will run on our public catalog records. This code looks up the biblionumber for the current record from the URL, passes that ID to the report, and if we get any data back from the report we label it and append it to the record display. Note that the report's JSON is always an array of arrays; there's one child array for each row the report returns. This code adds the OCLC holdings information contained in the 948 local use tag to the record without needing to modify Koha's XSLT templates.
 				</aside>
 				</section>
 
 				<section>
-					<h2>Reports Keep Getting Better!</h2>
+					<h2>Reports keep getting better!</h2>
 
 					<div class="column">
 						<div class="row">
@@ -300,13 +303,13 @@ class="results_summary"><span class="label">OCLC Holdings:
 						</div>
 
 						<aside class="notes">
-							I'm done listing my Koha SQL tips, but I want to take some time to appreciate all the excellent work that's going into making reports better. There have been so many quality of life improvements to reports over the past few years it's hard to remember them all. Many of these I use virtually every time I interact with reports.
+							I'm done listing my Koha SQL tips, but I want to take some time to appreciate all the excellent work that's going into making reports better. There have been so many quality of life improvements to reports over the past few years.
 
-							If your <code>SELECT</code> statement includes a table's identifier column, like biblionumber/itemnumber/borrowernumber, there are now buttons in the report's output that connect to bulk operations. So we can go directly from a report show items to item bulk modifications, for instance.
+							If your <code>SELECT</code> statement includes a table's identifier column, like biblionumber, there are now buttons in the report's output that connect to bulk operations. So we can go directly from a report on items to item bulk modifications, for instance.
 
-							In addition to the "save" and "run" buttons, there's now an "update and run" button. This may seem like a small deal, but it saves me so much time when refining a report, or using my "neverending query" which I edit and rerun frequently.
+							In addition to the "save" and "run" buttons, there's now an "update and run" button. This may seem like a small deal, but it saves so much time when refining a report, or using my "neverending query" which I edit and rerun frequently.
 
-							Field autocompletion was also added recently which can really help you type out reports quickly or remember some obscure field names.
+							Field autocompletion was added recently which can really help you type out reports quickly or remember some obscure field names.
 
 							Finally, reports that return numeric values can now generate graphs like a pie chart or time series.
 						</aside>
@@ -321,7 +324,7 @@ class="results_summary"><span class="label">OCLC Holdings:
 WHERE title LIKE CONCAT('%Rocky Horror Picture Sh','ow%')</code></pre>
 
 					<aside class="notes">
-						I mentioned that I am no SQL expert, but the Koha commmunity has some folks that truly are SQL wizards. There's a lot of activity in the reports channel of the ByWater Partners Slack organization where people ask questions or share their own fancy reports. One kind of comical example recently was different ways to work around how Koha reports censor certain SQL keywords for security purposes. If you want to use a word like "show" or "create" in a <code>WHERE</code> condition, you can use <code>CONCAT</code> so that the letters don't appear in sequence. A really clever workaround!
+						I mentioned that I am no SQL expert, but the Koha commmunity has some true SQL wizards. The reports channel of the ByWater Partners Slack organization is great for questions or sharing fancy reports. One comical example recently was different ways to work around how Koha reports censor certain SQL keywords for security purposes. If you want to use a word like "show" or "create" in a <code>WHERE</code> condition, you can use <code>CONCAT</code> so that the letters don't appear in sequence.
 
 						If you're not a ByWater customer, the main Koha Community Slack also has a reports channel for such discussions.
 					</aside>
